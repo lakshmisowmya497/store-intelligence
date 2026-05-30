@@ -3,11 +3,11 @@ import cv2
 from pathlib import Path
 
 # -----------------------------
-# Get project root directory
+# Project root folder
 # -----------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# CCTV video path
+# Video path
 video_path = BASE_DIR / "data" / "CAM3.mp4"
 
 print("Video path:", video_path)
@@ -30,7 +30,26 @@ if not cap.isOpened():
 print("Video opened successfully!")
 
 # -----------------------------
-# Process frames
+# Get video properties
+# -----------------------------
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps = int(cap.get(cv2.CAP_PROP_FPS))
+
+# -----------------------------
+# Create output video writer
+# -----------------------------
+output_path = BASE_DIR / "data" / "output_detection.mp4"
+
+writer = cv2.VideoWriter(
+    str(output_path),
+    cv2.VideoWriter_fourcc(*"mp4v"),
+    fps,
+    (width, height)
+)
+
+# -----------------------------
+# Process video
 # -----------------------------
 while True:
     ret, frame = cap.read()
@@ -39,11 +58,14 @@ while True:
         print("Video finished.")
         break
 
-    # Detect only persons (class 0)
+    # Detect persons only
     results = model(frame, classes=[0])
 
-    # Draw bounding boxes
+    # Draw boxes
     annotated_frame = results[0].plot()
+
+    # Save frame
+    writer.write(annotated_frame)
 
     # Show video
     cv2.imshow("Store Intelligence Detection", annotated_frame)
@@ -56,4 +78,8 @@ while True:
 # Cleanup
 # -----------------------------
 cap.release()
+writer.release()
 cv2.destroyAllWindows()
+
+print("Output video saved at:")
+print(output_path)
